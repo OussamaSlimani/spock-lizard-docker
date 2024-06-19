@@ -5,15 +5,21 @@ pipeline {
       parallel {
         stage('Log Tool Version') {
           steps {
-            bat '''mvn --version
-            git --version
-            java -version'''
+            sh '''
+              mvn --version
+              git --version
+              java -version
+            '''
           }
         }
 
         stage('Check for POM') {
           steps {
-            fileExists 'pom.xml'
+            script {
+              if (!fileExists('pom.xml')) {
+                error 'pom.xml not found!'
+              }
+            }
           }
         }
 
@@ -22,49 +28,38 @@ pipeline {
 
     stage('Build with Maven') {
       steps {
-        bat 'mvn compile'
+        sh 'mvn compile'
       }
     }
 
     stage('Run Tests') {
       steps {
-        bat 'mvn compile'
+        sh 'mvn test'
       }
     }
 
     stage('Run Static Code Analysis') {
       steps {
-        build job: static-code-analysis
+        build job: 'static-code-analysis'
       }
     }
 
-  
-
     stage('Build Docker Image') {
       steps {
-        build job: static-code-analysis
+        sh 'sudo docker build -t cameronmcnz/cams-rps-service .'
       }
     }
 
     stage('Create Executable JAR File') {
       steps {
-        bat 'mvn package spring-boot:repackage'
+        sh 'mvn package spring-boot:repackage'
       }
-    }  
+    }
 
-    stage('Build Docker IMage') {
+    stage('Push Docker Image') {
       steps {
-        bat 'sudo docker build -t cameronmcnz/cams-rps-service .'
+        sh 'docker push cameronmcnz/cams-rps-service:first'
       }
-    }   
-
-    stage('Software Versions') {
-            steps {
-                        docker push cameronmcnz90210/cams-rps-service:first
-                    
-                }
-            }
-        }
-
+    }
   }
 }
