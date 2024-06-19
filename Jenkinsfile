@@ -66,24 +66,5 @@ pipeline {
             }
         }
 
-    stage('Deploy to AWS') {
-      steps {
-            script {
-                    def response = input message: 'Should we push to DockerHub?', 
-                    parameters: [choice(choices: 'Yes\nNo', 
-                    description: 'Proceed or Abort?', 
-                    name: 'What to do???')]
-                    
-                    if (response=="Yes") {
-                        bat 'aws ecs update-service --cluster rps-cluster --service rps-service --force-new-deployment'
-                    }
-                    if (response=="No") {
-                         writeFile(file: 'deployment.txt', text: 'We did not deploy.')
-                    }
-                }
-       
-      }
-    }
-
   }
 }
