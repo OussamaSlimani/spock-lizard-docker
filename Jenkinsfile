@@ -1,28 +1,25 @@
 pipeline {
   agent any
   stages {
-    stage('Log Tool Version') {
-      parallel {
-        stage('Log Tool Version') {
-          steps {
-            sh '''
-              mvn --version
-              git --version
-              java -version
-            '''
+    stage('Log Tool Versions') {
+      steps {
+        parallel {
+          stage('Log Maven Version') {
+            steps {
+              sh 'mvn --version'
+            }
           }
-        }
-
-        stage('Check for POM') {
-          steps {
-            script {
-              if (!fileExists('pom.xml')) {
-                error 'pom.xml not found!'
-              }
+          stage('Log Git Version') {
+            steps {
+              sh 'git --version'
+            }
+          }
+          stage('Log Java Version') {
+            steps {
+              sh 'java -version'
             }
           }
         }
-
       }
     }
 
@@ -38,28 +35,28 @@ pipeline {
       }
     }
 
-    stage('Run Static Code Analysis') {
-      steps {
-        build job: 'static-code-analysis'
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
-        sh 'sudo docker build -t cameronmcnz/cams-rps-service .'
-      }
-    }
-
-    stage('Create Executable JAR File') {
-      steps {
-        sh 'mvn package spring-boot:repackage'
+        sh 'docker build -t oussamaslimani2001/cams-rps-service .'
       }
     }
 
     stage('Push Docker Image') {
       steps {
-        sh 'docker push cameronmcnz/cams-rps-service:first'
+          sh 'docker push oussamaslimani2001/cams-rps-service:first'
       }
+    }
+  }
+
+  post {
+    always {
+      cleanWs()
+    }
+    success {
+      echo 'Build and deployment succeeded.'
+    }
+    failure {
+      echo 'Build or deployment failed.'
     }
   }
 }
